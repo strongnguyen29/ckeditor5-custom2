@@ -33,6 +33,11 @@ import CloudServices from '@ckeditor/ckeditor5-cloud-services/src/cloudservices'
 import {Alignment} from "@ckeditor/ckeditor5-alignment";
 import {Font} from "@ckeditor/ckeditor5-font";
 
+import Plugin from '@ckeditor/ckeditor5-core/src/plugin';
+import ButtonView from '@ckeditor/ckeditor5-ui/src/button/buttonview';
+
+import imageIcon from '../theme/icon/folderimg.svg';
+
 export default class ClassicEditor extends ClassicEditorBase {}
 
 // Plugins to include in the build.
@@ -62,7 +67,8 @@ ClassicEditor.builtinPlugins = [
 	TableToolbar,
 	TextTransformation,
 	Alignment,
-	Font
+	Font,
+	ImageUrl
 ];
 
 // Editor configuration.
@@ -87,6 +93,7 @@ ClassicEditor.defaultConfig = {
 			'indent',
 			'|',
 			'uploadImage',
+			'imageUrl',
 			'blockQuote',
 			'insertTable',
 			'mediaEmbed',
@@ -114,3 +121,39 @@ ClassicEditor.defaultConfig = {
 	// This value must be kept in sync with the language defined in webpack.config.js.
 	language: 'vi'
 };
+
+class ImageUrl extends Plugin {
+	init() {
+		const editor = this.editor;
+
+		editor.ui.componentFactory.add( 'imageUrl', locale => {
+			const view = new ButtonView( locale );
+
+			view.set( {
+				label: 'Image url',
+				icon: imageIcon,
+				tooltip: true
+			} );
+
+			// Callback executed once the image is clicked.
+			view.on( 'execute', () => {
+				const imageUrl = this.getImageUrl()
+
+				editor.model.change( writer => {
+					const imageElement = writer.createElement( 'imageBlock', {
+						src: imageUrl
+					} );
+
+					// Insert the image in the current selection location.
+					editor.model.insertContent( imageElement, editor.model.document.selection );
+				} );
+			} );
+
+			return view;
+		} );
+	}
+
+	getImageUrl() {
+		return prompt( 'Image URL' );
+	}
+}
